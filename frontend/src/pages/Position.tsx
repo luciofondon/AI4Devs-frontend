@@ -16,16 +16,25 @@ export const Position: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (!id) return;
+        console.log('Fetching data for position:', id);
+        if (!id) {
+          setError('No se proporcionó ID de posición');
+          return;
+        }
+
         const [flowData, candidatesData] = await Promise.all([
           positionService.getInterviewFlow(id),
           positionService.getCandidates(id)
         ]);
+
+        console.log('Flow data:', flowData);
+        console.log('Candidates data:', candidatesData);
+
         setPositionData(flowData);
         setCandidates(candidatesData);
       } catch (err) {
+        console.error('Error fetching data:', err);
         setError('Error al cargar los datos de la posición');
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -44,11 +53,10 @@ export const Position: React.FC = () => {
     try {
       await positionService.updateCandidateStage(
         candidateId,
-        candidateId, // Asumiendo que applicationId es el mismo que candidateId
+        candidateId,
         newStepId
       );
 
-      // Actualizar el estado local
       setCandidates(prevCandidates =>
         prevCandidates.map(candidate =>
           candidate.fullName === candidateId
@@ -63,13 +71,54 @@ export const Position: React.FC = () => {
       );
     } catch (err) {
       console.error('Error al actualizar la fase del candidato:', err);
-      // Aquí podrías mostrar un mensaje de error al usuario
+      setError('Error al actualizar la fase del candidato');
     }
   };
 
-  if (loading) return <div className="p-4">Cargando...</div>;
-  if (error) return <div className="p-4 text-red-500">{error}</div>;
-  if (!positionData) return <div className="p-4">No se encontró la posición</div>;
+  if (loading) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Cargando...</span>
+          </div>
+          <p className="mt-2">Cargando datos de la posición...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4">
+        <div className="alert alert-danger" role="alert">
+          {error}
+        </div>
+        <button 
+          className="btn btn-primary mt-3"
+          onClick={() => navigate(-1)}
+        >
+          Volver atrás
+        </button>
+      </div>
+    );
+  }
+
+  if (!positionData) {
+    return (
+      <div className="p-4">
+        <div className="alert alert-warning" role="alert">
+          No se encontró la posición
+        </div>
+        <button 
+          className="btn btn-primary mt-3"
+          onClick={() => navigate(-1)}
+        >
+          Volver atrás
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
